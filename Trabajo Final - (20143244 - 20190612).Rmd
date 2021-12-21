@@ -1,0 +1,440 @@
+---
+title: "Trabajo Final"
+author: "Josemiguel"
+date: "19/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+FACULTAD DE CIENCIAS SOCIALES - PUCP
+
+Curso: Estadística para el análisis político 2 (POL304)
+
+Semestre 2021-1
+
+Docente: Marylia Cruz
+
+Alumnos: Alysson Rosas (20143244) y Josemiguel Vásquez (20190612)
+
+
+# Trabajo Final
+
+Tema: Los factores determinantes de la preferencia por la democracia en el Perú en el 2018
+
+#Creación de la base de datos / Análisis descriptivo de las variables empleadas (dependiente e independientes): 
+
+```{r}
+library(rio)
+data=import("Latinobarometro_2018_Esp_Spss_v20190303.sav")
+head(data)
+```
+
+```{r}
+str(data$IDENPA)
+```
+
+#Se crea un subset con únicamente los datos de Perú, debido a que la investigacion ira en torno a la crisis política del Perú en 2018.
+```{r}
+peru=subset(data,IDENPA==604)
+table(peru$IDENPA)
+```
+Se recodifica el término "604" que corresponde al país "Perú"
+```{r}
+library(car)
+levels(peru$IDENPA)=c("Peru")
+table(peru$IDENPA)
+```
+
+#En el subset "Peru" se seleccionan solo las variables dependiente e independientes a trabajar en la investigacion, reduciendo así la base de datos.
+```{r}
+library(dplyr)
+peru=select(peru, IDENPA, P12STGBS, P13STGBS.B, P14ST, P15STGBSC.A, P15STGBSC.B, P15STGBSC.D, P15STGBSC.E, P15STGBSC.F, P15STGBSC.G, P15STGBSC.H, P18GBS, P20STGBSC)
+```
+
+#Variable dependiente: Apoyo a un tipo de régimen.
+```{r}
+str(peru$P12STGBS)
+table(peru$P12STGBS)
+```
+La variable "Apoyo a un tipo de regimen" (P12STGBS), se encuentra como numérica y se divide en 3 opciones, que corresponden a un regimen democratico (1) o autoritario (2); además hay una opción de indiferencia (3) ante el tipo de régimen a preferir. Los encuestados que son indiferentes son un gran conjunto de personas; por esa razon, no se puede prescindir de esta información en el estudio.
+
+
+Se recodifica el orden de las subvariables de manera que los "indiferentes al tipo de regimen" (3) se encuentren en el espectro neutro (2), y el orden de las variables colabore con el modelo de regresion a utilizar. Luego, se convierte la variable a categórica y se renombran las subvariables.
+```{r}
+peru$P12STGBS = car::recode(peru$P12STGBS,"1=1;2=3;3=2")
+peru$P12STGBS = as.factor(peru$P12STGBS)
+levels(peru$P12STGBS)=c("Democratico","Indiferente","Autoritario")
+table(peru$P12STGBS)
+```
+De esta manera, según la muestra, en Perú en 2018, la mayoría de encuestados (514) preferia un regimen democratico. Los preferentes a un regimen autoritario (216) representaban a una minoria incluso en tercer orden comparados con los indiferentes. Sin embargo, la muestra parece indicar que de presentarse un gobierno autoritario, el apoyo estaría por encima de los opositores, debido a que los preferentes de un gobierno autoritario junto con los indiferentes representan un número mayor (540) que el de preferentes a un gobierno democratico (514). 
+La gran cantidad de indiferentes tambien puede representar un creciente número de anti politica en el Perú. Esto podría deberse a las crisis y errores de la clase política peruana.
+
+
+#Variable independiente: nivel de satisfaccion con la economia
+```{r}
+str(peru$P13STGBS.B)
+table(peru$P13STGBS.B)
+```
+La variable "Nivel de satifaccion con la economia" (P13STGBS.B), se encuentra como numérica y se divide en 4 opciones, que corresponden a la satifaccion ya sea mucha (1), algo (2), poca(3), nada(4).
+
+
+Se recodifica el orden de las subvariables de manera que se comience en el orden con los que tuvieron una satisfaccion menor con la economia, y los de mayor satisfaccion tengan un numero superior. Luego, se convierte la variable a ordinal y se renombran las subvariables.
+
+```{r}
+peru$P13STGBS.B = car::recode(peru$P13STGBS.B,"1=4;2=3;3=2;4=1")
+peru$P13STGBS.B = as.ordered(peru$P13STGBS.B)
+levels(peru$P13STGBS.B)=c("Nada","Poco","Algo","Mucho")
+table(peru$P13STGBS.B)
+```
+La muestra indica que, dentro los encuestados, hay una enorme diferencia entre los "muy satisfechos" (34) o "algo satisfechos" (79) con la economia, y los "nada satisfechos" (432) o "poco satisfechos" (608). Debido a que el crecimiento economico del país ha venido siendo progresivo -a excepcion del año 2020- esto puede indicar que no todos los peruanos fueron satisfechos de igual manera por el crecimiento total, o que su nivel de ganancia con el sistema economico ha ido en disminucion. 
+
+
+#Variable independiente: intenciones de quien gobierna
+```{r}
+str(peru$P14ST)
+table(peru$P14ST)
+```
+La variable "Intenciones de quien gobierna" (P14ST), representa la percepcion de los encuestados en referencia a si en el manejo de la politica se da "por poderosos" (1), o si se "gobierna para el pueblo" (2). Esta variable se encuentra como numérica. 
+
+
+Se convierte la variable a factor y se renombran las subvariables a las dos percepciones que se le presentaron a elegir a los encuestados, que se mencionaron anteriormente.
+
+```{r}
+peru$P14ST = as.factor(peru$P14ST)
+levels(peru$P14ST)=c("Por poderosos","Para el pueblo")
+table(peru$P14ST)
+```
+Hay una gran diferencia en el parecer de los encuentados en cuanto a las intenciones del gobierno peruano. Los encuestados con la percepcion de que se gobierna "por los poderosos" (1015) son casi diez veces en número los que tienen la percepcion de que se gobierna "para el pueblo" (145).
+Esta proporcion es similar si se compara a los dos niveles más altos de "satisfaccion con la economia" con respecto a sus los dos niveles más bajos de esa misma variable. De esa manera los dos niveles más altos de la anterior variable representan juntos a 113 encuestados y los dos niveles más bajos a 1040, casi la misma proporcion de 1/10.
+Por lo tanto parece haber una relación entre la percepción de que se gobierna por los poderosos y la menor satisfaccion economica, siendo que si son menos satisfechos podrian sentir que la economia es manejada por esos poderosos con mas ganancias.
+
+
+#Variable independiente: percepcion democratica
+```{r}
+str(peru$P18GBS)
+table(peru$P18GBS)
+```
+
+La variable "Percepcion democratica" (P18GBS), representa la percepcion de los encuestados en referencia a qué tipo de democracia hay en el Perú, si es una democracia plena (1), débil (2), muy débil (3), o si es que no hay una democracia (4) o no sabe el tipo o si es que hay alguna democracia (5). Esta variable se encuentra como numérica. 
+
+
+Se convierte la variable a factor y no a ordinal debido a que la subvariable "no hay democracia" también podría ser interpretada como hay un regimen autoritario y por lo tanto, no entra como una tipologia democratica en la cual habría un orden, sino como un elemento a parte de este. Además, la subvariable "no sabe" tampoco representa un nivel dentro de lo que un encuestado podria concebir como democracia, y los encuestados que eligieron esta opcion son un numero relevante que no puede ser descaartado. 
+Se renombran las subvariables a las cinco opciones presentadas anteriormente.
+
+```{r}
+peru$P18GBS = as.factor(peru$P18GBS)
+levels(peru$P18GBS)=c("Democracia plena","Democracia débil", "Democracia muy débil", "No Democracia ", "No sabe")
+table(peru$P18GBS)
+```
+Según la muestra, habría una mayor percepcion de democracia muy debil, lo cual podría ser preciso debido al comienzo de una etapa de crisis politica en el Perú entre finales de 2017 e inicios de 2018. Además es importante ver que el número de encuestados que percibe que no hay democracia en el país es casi 4 veces el número de encuestados que percibe una democracia plena, lo cual denota un claro desgaste democrático entre polos "democracia-autoritarismo". 
+
+
+
+#Variable independiente: Aprobacion del gobierno
+```{r}
+str(peru$P20STGBSC)
+table(peru$P20STGBSC)
+```
+La variable "Aprobacion al gobierno" (P20STGBSC) se encuentra como numérica y hay dos opciones, la aprobacion (1), o desaprobacion (2) del gobierno de turno, el cual era el gobierno de Martin Vizcarra (Año 2018). 
+
+Se convierte la variable a factor y se renombran las subvariables a las dos percepciones que se le presentaron a elegir a los encuestados, que se mencionaron anteriormente.
+```{r}
+peru$P20STGBSC = as.factor(peru$P20STGBSC)
+levels(peru$P20STGBSC)=c("Aprueba","Desaprueba")
+table(peru$P20STGBSC)
+```
+Se puede apreciar que, en los encuestados, la desaprobacion es mucho mayor que la aprobacion al gobierno. Sin embargo, esta mayoria (714) no se veria representada en los que apoyan un gobierno autoritario (216) pues son muchos menos; ni los que perciben que se gobierna por poderosos (1015), pues son muchos más, al igual que los dos niveles más bajos de satisfaccion con la economia (1040). Se puede decir que la mayor desaprobacion tendría que ver con la incapacidad para resolver la crisis politica que se vivia en el pais y los crecientes escandalos de corrupcion.
+
+
+#Variable independiente: confianza en fuerzas de seguridad 
+```{r}
+table(peru$P15STGBSC.A)
+table(peru$P15STGBSC.B)
+```
+La variable "Confianza en fuerzas de seguridad" (conf_fuerzas), se creará a partir de un indice aditivo entre la confianza (mucha, algo, poco o nada) en las Fuerzas Armadas (P15STGBSC.A) y la PNP (P15STGBSC.B). Estas dos variables son numéricas y se dividen en los 4 niveles ya mencionados.
+
+
+
+Se recodifica el orden de las subvariables de manera que se comience en el orden con los que tuvieron una confianza menor en las fuerzas de seguridad, y los de mayor confianza tengan un numero superior. Esta variable será numérica
+
+```{r}
+peru$P15STGBSC.A = car::recode(peru$P15STGBSC.A,"1=4;2=3;3=2;4=1")
+peru$P15STGBSC.B = car::recode(peru$P15STGBSC.B,"1=4;2=3;3=2;4=1")
+```
+
+```{r}
+table(peru$P15STGBSC.A)
+table(peru$P15STGBSC.B)
+```
+
+```{r}
+peru$conf_fuerzas=peru$P15STGBSC.A+peru$P15STGBSC.B
+summary(peru$conf_fuerzas)
+```
+```{r}
+peru$conf_fuerzas=peru$conf_fuerzas-2.00
+```
+
+```{r}
+peru$conf_fuerzas=peru$conf_fuerzas/6.00
+```
+
+```{r}
+summary(peru$conf_fuerzas)
+```
+#se establece el índice desde 0 al 100
+```{r}
+peru$conf_fuerzas=peru$conf_fuerzas*100
+summary(peru$conf_fuerzas)
+```
+El promedio de la confianza en las fuerzas de seguridad en el Perú según la muestra es de 43.12%. Esto puede indicar que la confianza tiende a tener un nivel bajo, y que son más los encuestados que expresan no confiar "nada" o "poco" en las fuerzas de seguridad que los que confian "algo" o "mucho". Esto podría relacionarse a la corrupcion institucional en la PNP y las FF.AA, así como a los crimenes cometidos hace unas decadas en el conflicto armado interno.
+
+```{r}
+var(peru$conf_fuerzas, na.rm=T)
+```
+```{r}
+sqrt(6.296269)
+```
+La desviacion estandar de esta variable muestra una clara desagrupacion de los valores. Si bien los valores tienden a la media y a la tendencia de una baja confianza, como se interpreto por la media, la "baja confianza" no es exagerada. Por la desviacion se puede interpretar que la diferencia entre los cuatro niveles de confianza no es mucha, y que si bien hay un grupo mayor, no estan tan separados.
+
+
+
+#Variable independiente: confianza en instituciones democraticas
+La variable "Confianza en instituciones democraticas" (conf_demo), se creará a partir de un indice aditivo entre la confianza (mucha, algo, poco o nada) en el Congreso (P15STGBSC.D), el Gobierno (P15STGBSC.E), el Poder Judicial (P15STGBSC.F), los partidos politicos (P15STGBSC.G), y la ONPE (P15STGBSC.H). Estas cinco variables son numéricas y se dividen en los 4 niveles ya mencionados.
+
+
+Se recodifica el orden de las subvariables de manera que se comience en el orden con los que tuvieron una confianza menor en las fuerzas de seguridad, y los de mayor confianza tengan un numero superior. Esta variable será numérica
+```{r}
+table(peru$P15STGBSC.D)
+table(peru$P15STGBSC.E)
+table(peru$P15STGBSC.F)
+table(peru$P15STGBSC.G)
+table(peru$P15STGBSC.H)
+```
+
+```{r}
+peru$P15STGBSC.D = car::recode(peru$P15STGBSC.D,"1=4;2=3;3=2;4=1")
+peru$P15STGBSC.E = car::recode(peru$P15STGBSC.E,"1=4;2=3;3=2;4=1")
+peru$P15STGBSC.F = car::recode(peru$P15STGBSC.F,"1=4;2=3;3=2;4=1")
+peru$P15STGBSC.G = car::recode(peru$P15STGBSC.G,"1=4;2=3;3=2;4=1")
+peru$P15STGBSC.H = car::recode(peru$P15STGBSC.H,"1=4;2=3;3=2;4=1")
+```
+
+```{r}
+table(peru$P15STGBSC.D)
+table(peru$P15STGBSC.E)
+table(peru$P15STGBSC.F)
+table(peru$P15STGBSC.G)
+table(peru$P15STGBSC.H)
+```
+
+```{r}
+peru$conf_demo=peru$P15STGBSC.D+peru$P15STGBSC.E+peru$P15STGBSC.F+peru$P15STGBSC.G+peru$P15STGBSC.H
+summary(peru$conf_demo)
+```
+
+```{r}
+peru$conf_demo=peru$conf_demo-5.00
+```
+
+```{r}
+peru$conf_demo=peru$conf_demo/15.00
+```
+
+```{r}
+summary(peru$conf_demo)
+```
+#se establece el índice desde 0 al 10
+```{r}
+peru$conf_demo=peru$conf_demo*100
+summary(peru$conf_demo)
+```
+La muestra indica un promedio de 23.65% en la confianza a las instituciones democraticas. Se puede decir de esta proporcion que la confianza tiene niveles muy bajos, mucho más que la confianza en las fuerzas de seguridad. Esto podría deberse a la crisis politica en el país que enfrento al legislativo y ejecutivo, o la incapacidad del poder judicial para intermediar en la crisis mediante metodos constitucionales. Estos tres poderes se encuentran en el indice aditivo. Además, en 2018 hubo elecciones regionales y municipales, por lo que una baja confianza podria deberse a descontentos con resultados electorales. Por último, la baja confianza también podria representar un sentimiento anti politico y que, a pesar de los esfuerzos por una politica más formal en el sistema peruano, la tradicion de informalidad partidaria podría haber tenido que ver en este resultado.
+
+```{r}
+var(peru$conf_demo, na.rm=T)
+```
+```{r}
+sqrt(3.058903)
+```
+La desviacion estandar de esta variable no muestra una desagrupacion exagerada de los valores. Si bien tampoco son tan uniformes entre ellos, sí se puede hablar de una constancia en la baja confianza en las instituciones democraticas.
+
+
+
+
+
+# REGRESION LOGISTICA MULTIPLE
+
+El presente trabajo de investigación propone diseñar un modelo mediante la aplicación de una regresión logística múltiple por ser la más conveniente al trabajarse con una variable dependiente categórica nominal de tipo politómica, donde se tienen más de dos opciones: democracia, indiferencia y autoritarismo.
+
+
+#Primero, se eliminan los N.A debido a que su dispersion entre las variables limita el estudios con los dummies y la comparacion entre modelos.
+```{r}
+peru = na.omit(peru)
+peru = peru[,-5]
+peru = peru[,-5]
+peru = peru[,-5]
+peru = peru[,-5]
+peru = peru[,-5]
+peru = peru[,-5]
+peru = peru[,-5]
+```
+
+
+Se renombran las variables
+```{r}
+names(peru)=c("País","Regimenes","Economia","Intencion","Percepcion","Aprobacion","conf_fuerzas","conf_demo")
+```
+
+- "Regimenes" hace referencia a la variable dependiente sobre regimenes democraticos o autoritarios
+- "Economia" hace referencia a la "satisfacción sobre la economia"
+- "Intencion" hace referencia a la intencion que tiene el gobierno en cuanto a gobernar "para el pueblo" o "por los poderosos"
+- "Percepcion" hace referencia a la "percepcion de la democracia" 
+- "Aprobacion" hace referencia a la aprobacion o desaprobacion del gobierno
+- "conf_fuerzas" hace referencia a la "confianza en las fuerzas de seguridad"
+- "conf_demo" hace referencia a la "confianza en las instituciones políticas"
+
+
+Se crean dummies a las variables con más de dos elementos las cuales son "Satisfacción con la economia" y "Percepcion de la democracia"
+```{r}
+library(fastDummies)
+peru=dummy_cols(peru, select_columns = c("Economia"))
+peru=dummy_cols(peru, select_columns = c("Percepcion"))
+```
+
+Se prepara la categoría base entre "democrático" y "autoritario", la cual será "indiferente"
+```{r}
+library(reshape2)
+peru$Regimenes <- relevel(peru$Regimenes , ref = "Indiferente")
+```
+
+#Luego, se realiza el modelo de regresion logistica multiple
+```{r}
+library(nnet)
+modelo1 <- multinom(peru$Regimenes ~  peru$Intencion + peru$Aprobacion + peru$conf_fuerzas + peru$conf_demo + peru$Economia_Nada + peru$Economia_Poco + peru$Economia_Algo + peru$`Percepcion_Democracia plena` + peru$`Percepcion_Democracia débil` + peru$`Percepcion_Democracia muy débil` + peru$`Percepcion_No Democracia `, data = peru)
+summary(modelo1)
+```
+
+#Despues, se calculan los p-value de las variables independientes con respecto a la dependiente
+```{r}
+# Se calculan los valores de Z
+z <- summary(modelo1)$coefficients/summary(modelo1)$standard.errors
+# Calcular el p-valor
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p
+```
+
+Se redondean los valores
+```{r}
+round(p,2)
+```
+Debido a que lo que el trabajo busca analizar son los factores para la preferencia por la democracia, se analizará su significación con respecto a regimen "democratico".
+
+Al modelo de regimen democratico con respecto a la indiferencia ante el tipo de regimen, son significativas las variables de "intencion de gobierno para el pueblo", "confianza en las instituciones políticas", "percepcion de una democracia plena" y "percepcion de una democracia muy debil". 
+Por otro lado, no son significativos las variables de "desaprobacion al gobierno", "confianza en las fuerzas de seguridad", las tres variables de "satisfaccion economica" que sienten nada, poco y algo de satisfaccion, asimismo, no muestran significancia las dos variables de "percepcion democratica" que perciben una democracia debil y nula.
+
+
+#Luego, se interpretan los coeficientes en como afecta a la variable dependiente respecto a la categoria base
+```{r}
+exp(coef(modelo1))
+```
+
+-> "Intención de gobierno para el pueblo"
+Creer que se gobierna para el pueblo, en lugar de por los poderosos: 0.4930
+```{r}
+1/0.4930
+```
+No creer que se gobierna para el pueblo, es decir, el creer que se gobierna por los poderosos, aumenta 2.0283 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Desaprobacion al gobierno": 0.9412
+```{r}
+1/0.9412
+```
+El no desaprobar al gobierno, es decir, aprobar la gestión del gobierno aumenta 1.0624 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Confianza en las fuerzas de seguridad": 1.0039
+
+Si la confianza en las fuerzas de seguridad crece en una unidad, aumenta 1.0039 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Confianza en las instituciones políticas": 1.0127
+
+Si la confianza en las instituciones politicas crece en una unidad, aumenta 1.0127 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Nada satisfaccion con la economia": 0.4122
+```{r}
+1/0.4122
+```
+El no estar nada satisfecho con la economia aumenta 2.426 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Poca satisfaccion con la economia": 0.8222
+```{r}
+1/0.8222
+```
+El no estar poco satisfecho con la economia aumenta 1.2162 veces la probabilidad de preferir la democracia frente a la indiferencia.
+                                     
+
+-> "Alguna satisfaccion con la economia": 0.7817
+```{r}
+1/0.7817
+```
+El no estar algo satisfecho con la economia aumenta 1.2792 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Percepcion de una democracia plena": 5.6790
+
+El percibir una democracia plena aumenta 5.679 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Percepcion de una democracia debil": 1.8033
+
+El percibir una democracia débil aumenta 1.8033 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Percepcion de una democracia muy debil": 1.9101
+
+El percibir una democracia muy débil aumenta 1.9101 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+-> "Percepcion de no que no hay democracia": 1.2433
+
+El percibir la ausencia de democracia aumenta 1.2433 veces la probabilidad de preferir la democracia frente a la indiferencia.
+
+
+#Despues, se verifica si el modelo mejora la explicacion de la variable dependiente
+Se crea un modelo nulo
+```{r}
+library(nnet)
+modelo0 <- multinom(peru$Regimenes ~ 1, data = peru)
+summary(modelo0)
+```
+
+Se comparan los modelos creados
+```{r}
+anova(modelo0,modelo1)
+```
+La prueba chi cuadrado indica que es menor 0.05, por lo tanto se niega la hipotesis nula de que no hay diferencias significativas entre modelo. Por tanto esto demuestra la existencia de diferencias significativas.
+
+
+#Por último, se calcula el PSEUDO R2 para ver cuanto explica el modelo
+```{r}
+library(DescTools)
+PseudoR2(modelo1, which = c("Nagelkerke"))
+```
+La prueba indica que el modelo explica el 8.25% de la variable dependiente.
+
+
+*Las interpretaciones y hallazgos, así como las conclusiones se encuentran en el PDF y video*
+
+*Link del repositorio de trabajo en Github* : https://github.com/20190612jm/Trabajo-Final-Estadistica-2-PUCP 
+
+
+
+
